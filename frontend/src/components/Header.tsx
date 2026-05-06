@@ -13,6 +13,10 @@ const Header = () => {
     { name: 'Contact', href: '#contact' },
   ];
 
+  const handleLaunchDApp = () => {
+    window.open('http://localhost:5173', '_blank');
+  };
+
   return (
     <motion.header
       initial={{ y: -100 }}
@@ -43,9 +47,10 @@ const Header = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onClick={handleLaunchDApp}
             className="hidden md:block px-6 py-2.5 bg-gradient-to-r from-primary to-accent rounded-lg font-semibold text-white text-sm"
           >
-            Get Started
+            Launch DApp
           </motion.button>
 
           {/* Mobile Menu Button */}
@@ -76,8 +81,14 @@ const Header = () => {
                   {item.name}
                 </a>
               ))}
-              <button className="w-full px-6 py-2.5 bg-gradient-to-r from-primary to-accent rounded-lg font-semibold text-white text-sm">
-                Get Started
+              <button 
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  handleLaunchDApp();
+                }}
+                className="w-full px-6 py-2.5 bg-gradient-to-r from-primary to-accent rounded-lg font-semibold text-white text-sm"
+              >
+                Launch DApp
               </button>
             </nav>
           </motion.div>

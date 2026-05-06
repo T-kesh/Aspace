@@ -2,6 +2,10 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Zap, Shield, Network } from 'lucide-react';
 
 const Hero = () => {
+  const handleLaunchDApp = () => {
+    window.open('http://localhost:5173', '_blank');
+  };
+
   return (
     <section className="min-h-screen flex items-center justify-center relative overflow-hidden pt-20">
       {/* Animated gradient background */}
@@ -94,11 +98,12 @@ const Hero = () => {
             <motion.button
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
+              onClick={handleLaunchDApp}
               className="group relative px-8 py-4 bg-gradient-to-r from-primary via-primary-light to-accent rounded-xl font-semibold text-white overflow-hidden shadow-lg shadow-primary/25"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-accent/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <span className="relative flex items-center gap-2">
-                Get Started
+                Launch DApp
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </span>
             </motion.button>

@@ -1,0 +1,17 @@
+{
+  "name": "aspace",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install && npm install --prefix backend && npm install --prefix frontend && npm install --prefix dapp",
+    "dev": "concurrently -n backend,frontend,dapp -c cyan,green,magenta \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\" \"npm run dev --prefix dapp\"",
+    "dev:site": "concurrently -n backend,frontend -c cyan,green \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "dev:dapp": "concurrently -n backend,dapp -c cyan,magenta \"npm run dev --prefix backend\" \"npm run dev --prefix dapp\"",
+    "dev:all": "concurrently -n backend,frontend,dapp -c cyan,green,magenta \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\" \"npm run dev --prefix dapp\"",
+    "db:migrate": "npm run db:migrate --prefix backend",
+    "build": "npm run build --prefix backend && npm run build --prefix frontend && npm run build --prefix dapp"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

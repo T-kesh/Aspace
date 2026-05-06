@@ -6,6 +6,10 @@ const Hero = () => {
     window.open('http://localhost:5173', '_blank');
   };
 
+  const handleLearnMore = () => {
+    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <section className="min-h-screen flex items-center justify-center relative overflow-hidden pt-20">
       {/* Animated gradient background */}
@@ -99,6 +103,7 @@ const Hero = () => {
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleLaunchDApp}
+              type="button"
               className="group relative px-8 py-4 bg-gradient-to-r from-primary via-primary-light to-accent rounded-xl font-semibold text-white overflow-hidden shadow-lg shadow-primary/25"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-accent/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -111,6 +116,8 @@ const Hero = () => {
             <motion.button
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
+              onClick={handleLearnMore}
+              type="button"
               className="px-8 py-4 border border-white/20 rounded-xl font-semibold text-white hover:bg-white/5 hover:border-white/30 transition-all duration-300 backdrop-blur-sm"
             >
               Learn More

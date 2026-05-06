@@ -2,6 +2,14 @@ import { motion } from 'framer-motion';
 import { ArrowRight, BookOpen } from 'lucide-react';
 
 const CTA = () => {
+  const handleLaunchDApp = () => {
+    window.open('http://localhost:5173', '_blank');
+  };
+
+  const handleViewDocumentation = () => {
+    document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <section className="py-32 relative overflow-hidden">
       {/* Animated gradient background */}
@@ -35,6 +43,8 @@ const CTA = () => {
             <motion.button
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
+              onClick={handleLaunchDApp}
+              type="button"
               className="group relative px-8 py-4 bg-gradient-to-r from-accent via-green to-accent-dark rounded-xl font-semibold text-midnight overflow-hidden shadow-lg shadow-accent/25"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -47,6 +57,8 @@ const CTA = () => {
             <motion.button
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
+              onClick={handleViewDocumentation}
+              type="button"
               className="px-8 py-4 border border-white/20 rounded-xl font-semibold text-white hover:bg-white/5 hover:border-white/30 transition-all duration-300 backdrop-blur-sm flex items-center gap-2"
             >
               <BookOpen className="w-5 h-5" />

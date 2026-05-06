@@ -1,7 +1,11 @@
 import { useAccount } from 'wagmi'
+import { useNavigate } from 'react-router-dom'
+import { useBackendAgents } from '../hooks/useBackendAgents'
 
 export default function Dashboard() {
   const { isConnected, address } = useAccount()
+  const navigate = useNavigate()
+  const { agents } = useBackendAgents()
 
   if (!isConnected) {
     return (
@@ -29,7 +33,7 @@ export default function Dashboard() {
         
         <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
           <h3 className="text-lg font-semibold mb-2">Your Agents</h3>
-          <p className="text-3xl font-bold text-green">0</p>
+          <p className="text-3xl font-bold text-green">{agents.length}</p>
         </div>
       </div>
 
@@ -37,13 +41,25 @@ export default function Dashboard() {
         <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
           <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
           <div className="space-y-3">
-            <button className="w-full px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+            <button
+              type="button"
+              onClick={() => navigate('/register-agent')}
+              className="w-full px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+            >
               Register New Agent
             </button>
-            <button className="w-full px-4 py-3 bg-accent text-midnight rounded-lg hover:bg-accent/90 transition-colors font-semibold">
+            <button
+              type="button"
+              onClick={() => navigate('/create-task')}
+              className="w-full px-4 py-3 bg-accent text-midnight rounded-lg hover:bg-accent/90 transition-colors font-semibold"
+            >
               Create Task
             </button>
-            <button className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors">
+            <button
+              type="button"
+              onClick={() => navigate('/marketplace')}
+              className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            >
               Browse Marketplace
             </button>
           </div>

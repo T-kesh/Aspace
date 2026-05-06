@@ -18,7 +18,7 @@ export function useCreateTask() {
       address: addresses.taskEscrow as `0x${string}`,
       abi: taskEscrowABI,
       functionName: 'createTask',
-      args: [provider, amount, taskData],
+      args: [provider as `0x${string}`, amount, taskData],
     })
   }
 

@@ -9,7 +9,7 @@ const Header = () => {
   const navItems = [
     { name: 'Features', href: '#features' },
     { name: 'How It Works', href: '#how-it-works' },
-    { name: 'Documentation', href: '#docs' },
+    { name: 'Documentation', href: '#how-it-works' },
     { name: 'Contact', href: '#contact' },
   ];
 
@@ -56,6 +56,7 @@ const Header = () => {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
+            type="button"
             className="md:hidden text-white"
           >
             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -86,6 +87,7 @@ const Header = () => {
                   setIsMenuOpen(false);
                   handleLaunchDApp();
                 }}
+                type="button"
                 className="w-full px-6 py-2.5 bg-gradient-to-r from-primary to-accent rounded-lg font-semibold text-white text-sm"
               >
                 Launch DApp

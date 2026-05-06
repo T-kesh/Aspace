@@ -1,8 +1,10 @@
 import { useAccount } from 'wagmi'
+import { useNavigate } from 'react-router-dom'
 import { useGetAgent } from '../hooks/useAgentRegistry'
 
 export default function AgentDashboard() {
   const { isConnected, address } = useAccount()
+  const navigate = useNavigate()
   const { agent, isLoading } = useGetAgent(address || '0x0000000000000000000000000000000000000000')
 
   if (!isConnected) {
@@ -71,7 +73,11 @@ export default function AgentDashboard() {
         ) : (
           <div className="text-center py-8 text-gray-400">
             <p>No agent registered for this address</p>
-            <button className="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+            <button
+              type="button"
+              onClick={() => navigate('/register-agent')}
+              className="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+            >
               Register Agent
             </button>
           </div>

@@ -1,10 +1,13 @@
 import { useState } from 'react'
 import { useAccount } from 'wagmi'
+import { useCreateBackendAgent } from '../hooks/useBackendAgents'
 import { useRegisterAgent } from '../hooks/useAgentRegistry'
 
 export default function AgentRegistration() {
   const { isConnected, address } = useAccount()
   const { registerAgent, isPending } = useRegisterAgent()
+  const createBackendAgent = useCreateBackendAgent()
+  const [message, setMessage] = useState('')
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -21,19 +24,30 @@ export default function AgentRegistration() {
     )
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setMessage('')
     
-    const capabilitiesArray = formData.capabilities.split(',').map(c => c.trim())
-    const priceInWei = BigInt(Math.floor(parseFloat(formData.pricePerTask) * 1e6))
+    const capabilitiesArray = formData.capabilities.split(',').map(c => c.trim()).filter(Boolean)
+    const pricePerTask = Number(formData.pricePerTask)
+    const walletAddress = address || '0x0000000000000000000000000000000000000000'
+    const priceInWei = BigInt(Math.floor(pricePerTask * 1e6))
     
-    registerAgent(
-      address || '0x0000000000000000000000000000000000000000',
-      formData.name,
-      formData.description,
-      capabilitiesArray,
-      priceInWei
-    )
+    try {
+      await createBackendAgent.mutateAsync({
+        walletAddress,
+        ownerAddress: walletAddress,
+        name: formData.name,
+        capabilities: capabilitiesArray,
+        pricePerTask,
+        metadataUri: formData.description,
+      })
+
+      registerAgent(walletAddress, formData.name, formData.description, capabilitiesArray, priceInWei)
+      setMessage('Agent saved to backend. Confirm the wallet transaction to register on-chain.')
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not save agent to backend.')
+    }
   }
 
   return (
@@ -94,11 +108,17 @@ export default function AgentRegistration() {
 
         <button
           type="submit"
-          disabled={isPending}
+          disabled={isPending || createBackendAgent.isPending}
           className="w-full px-4 py-3 bg-accent text-midnight rounded-lg hover:bg-accent/90 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isPending ? 'Registering...' : 'Register Agent'}
+          {isPending || createBackendAgent.isPending ? 'Registering...' : 'Register Agent'}
         </button>
+
+        {message && (
+          <p className="text-sm text-gray-300 bg-gray-800/70 border border-gray-700 rounded-lg px-4 py-3">
+            {message}
+          </p>
+        )}
       </form>
     </div>
   )

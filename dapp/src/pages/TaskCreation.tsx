@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { useAccount } from 'wagmi'
+import { useSearchParams } from 'react-router-dom'
 import { useCreateTask } from '../hooks/useTaskEscrow'
 
 export default function TaskCreation() {
   const { isConnected } = useAccount()
   const { createTask, isPending } = useCreateTask()
+  const [searchParams] = useSearchParams()
   const [formData, setFormData] = useState({
-    provider: '',
+    provider: searchParams.get('provider') ?? '',
     amount: '',
     taskData: ''
   })

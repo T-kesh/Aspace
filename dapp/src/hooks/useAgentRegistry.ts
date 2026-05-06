@@ -20,7 +20,7 @@ export function useRegisterAgent() {
       address: addresses.agentRegistry as `0x${string}`,
       abi: agentRegistryABI,
       functionName: 'registerAgent',
-      args: [agentAddress, name, description, capabilities, pricePerTask],
+      args: [agentAddress as `0x${string}`, name, description, capabilities, pricePerTask],
     })
   }
 
@@ -35,7 +35,7 @@ export function useGetAgent(agentAddress: string) {
     address: addresses.agentRegistry as `0x${string}`,
     abi: agentRegistryABI,
     functionName: 'getAgent',
-    args: [agentAddress],
+    args: [agentAddress as `0x${string}`],
   })
 
   return { agent: data, isLoading, error }

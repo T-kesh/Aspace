@@ -1,14 +1,22 @@
 import { useAccount } from 'wagmi'
 import { useAllAgents } from '../hooks/useAllAgents'
 import { useAllTasks, useTasks } from '../hooks/useAllTasks'
+import { useFundTask, useCompleteTask } from '../hooks/useTaskEscrow'
 import { useState, useEffect } from 'react'
 
 export default function TaskMarketplace() {
-  const { isConnected } = useAccount()
-  const { agents, isLoading: agentsLoading } = useAllAgents()
+  const { isConnected, address } = useAccount()
+  const { agents, isLoading: agentsLoading, error: agentsError } = useAllAgents()
   const { nextTaskId } = useAllTasks()
   const [taskIds, setTaskIds] = useState<number[]>([])
   const [selectedCapability, setSelectedCapability] = useState<string>('all')
+  
+  // Task interaction hooks
+  const { fundTask, isPending: fundPending } = useFundTask()
+  const { completeTask, isPending: completePending } = useCompleteTask()
+
+  // Always call useTasks with current taskIds (empty array initially)
+  const { tasks, isLoading: tasksLoading, errors: taskErrors } = useTasks(taskIds.slice(0, 20))
 
   // Generate task IDs to fetch
   useEffect(() => {
@@ -20,9 +28,6 @@ export default function TaskMarketplace() {
       setTaskIds(ids)
     }
   }, [nextTaskId])
-
-  // Fetch tasks in batches (limit to avoid too many requests)
-  const { tasks, isLoading: tasksLoading } = useTasks(taskIds.slice(0, 20)) // Limit to first 20 tasks
 
   // Extract unique capabilities from agents
   const allCapabilities = agents ? 
@@ -48,6 +53,38 @@ export default function TaskMarketplace() {
         return providerAgent?.capabilities?.includes(selectedCapability)
       })
 
+  const isLoading = agentsLoading || tasksLoading
+
+  // Task interaction handlers
+  const handleAcceptTask = async (task: any) => {
+    try {
+      // Fund the task (accept it)
+      await fundTask(task.taskId, task.amount)
+    } catch (error) {
+      console.error('Error accepting task:', error)
+    }
+  }
+
+  const handleCompleteTask = async (task: any) => {
+    try {
+      // Complete the task with sample output
+      await completeTask(task.taskId, "Task completed successfully")
+    } catch (error) {
+      console.error('Error completing task:', error)
+    }
+  }
+
+  // Check if user is the task provider
+  const isUserProvider = (task: any) => {
+    return address && task.provider.toLowerCase() === address.toLowerCase()
+  }
+
+  // Check if user is the task client
+  const isUserClient = (task: any) => {
+    return address && task.client.toLowerCase() === address.toLowerCase()
+  }
+
+  // Early returns after all hooks are called
   if (!isConnected) {
     return (
       <div className="text-center py-20">
@@ -57,7 +94,20 @@ export default function TaskMarketplace() {
     )
   }
 
-  const isLoading = agentsLoading || tasksLoading
+  // Error handling
+  if (agentsError || (taskErrors && taskErrors.length > 0)) {
+    return (
+      <div className="text-center py-20">
+        <h1 className="text-4xl font-bold mb-4">Task Marketplace</h1>
+        <div className="bg-red/20 border border-red/50 rounded-lg p-4 max-w-2xl mx-auto">
+          <p className="text-red mb-2">Error loading marketplace data</p>
+          <p className="text-gray-400 text-sm">
+            {agentsError?.message || 'Failed to load tasks. Please check your wallet connection and try again.'}
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   if (isLoading) {
     return <div className="text-center py-20">Loading marketplace...</div>
@@ -169,9 +219,36 @@ export default function TaskMarketplace() {
                 <span className="text-accent font-semibold">
                   ${(Number(task.amount) / 1_000_000).toFixed(2)} USDC
                 </span>
-                <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm">
-                  Accept Task
-                </button>
+                <div className="flex gap-2">
+                  {task.status === 0 && !isUserClient(task) && !isUserProvider(task) && (
+                    <button 
+                      onClick={() => handleAcceptTask(task)}
+                      disabled={fundPending}
+                      className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm disabled:opacity-50"
+                    >
+                      {fundPending ? 'Accepting...' : 'Accept Task'}
+                    </button>
+                  )}
+                  {task.status === 2 && isUserProvider(task) && (
+                    <button 
+                      onClick={() => handleCompleteTask(task)}
+                      disabled={completePending}
+                      className="px-4 py-2 bg-green text-white rounded-lg hover:bg-green/90 transition-colors text-sm disabled:opacity-50"
+                    >
+                      {completePending ? 'Completing...' : 'Complete Task'}
+                    </button>
+                  )}
+                  {isUserClient(task) && (
+                    <span className="px-3 py-1 bg-gray-600 text-gray-300 rounded text-sm">
+                      Your Task
+                    </span>
+                  )}
+                  {isUserProvider(task) && task.status !== 2 && (
+                    <span className="px-3 py-1 bg-blue text-white rounded text-sm">
+                      You're Provider
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           ))}

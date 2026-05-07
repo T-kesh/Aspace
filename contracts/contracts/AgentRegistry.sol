@@ -183,8 +183,12 @@ contract AgentRegistry is Ownable, ReentrancyGuard {
     /**
      * @notice Get all registered agents
      */
-    function getAllAgents() external view returns (address[] memory) {
-        return agentAddresses;
+    function getAllAgents() external view returns (Agent[] memory) {
+        Agent[] memory allAgents = new Agent[](totalAgents);
+        for (uint256 i = 0; i < totalAgents; i++) {
+            allAgents[i] = agents[agentAddresses[i]];
+        }
+        return allAgents;
     }
 
     /**

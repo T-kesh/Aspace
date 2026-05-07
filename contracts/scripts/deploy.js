@@ -66,6 +66,10 @@ async function main() {
   await taskEscrow.setVerifierContract(verifierAddress);
   console.log("Verifier set in TaskEscrow");
 
+  // Set Reputation in TaskEscrow (for auto-updates)
+  await taskEscrow.setReputationContract(reputationAddress);
+  console.log("Reputation set in TaskEscrow");
+
   // Authorize deployer as verifier (for testing)
   await verifier.authorizeVerifier(deployer.address);
   console.log("Deployer authorized as verifier");

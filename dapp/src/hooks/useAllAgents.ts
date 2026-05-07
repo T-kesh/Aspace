@@ -3,6 +3,18 @@ import { agentRegistryABI } from '../contracts/agentRegistryABI'
 import { getContractAddresses } from '../contracts/config'
 import { useChainId } from 'wagmi'
 
+export interface Agent {
+  owner: string
+  name: string
+  description: string
+  capabilities: string[]
+  pricePerTask: bigint
+  reputationScore: bigint
+  isActive: boolean
+  totalTasksCompleted: bigint
+  registrationTime: bigint
+}
+
 export function useAllAgents() {
   const chainId = useChainId()
   const addresses = getContractAddresses(chainId)
@@ -13,5 +25,5 @@ export function useAllAgents() {
     functionName: 'getAllAgents',
   })
 
-  return { agents: data as `0x${string}`[] | undefined, isLoading, error }
+  return { agents: data as Agent[] | undefined, isLoading, error }
 }

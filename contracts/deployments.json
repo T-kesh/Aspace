@@ -1,0 +1,13 @@
+{
+  "network": "kiteai",
+  "chainId": "2368",
+  "deployer": "0x80910202d6a3682E10f8C70b7ab295c0ef8E7B22",
+  "contracts": {
+    "MockUSDC": "0x25534fF2742d7EfC8cf075500b78324be8637CA5",
+    "AgentRegistry": "0x59E09856Ca9F15Fd770528e91760B54c982C185e",
+    "TaskEscrow": "0x544f9D8a6564254cE90295fe307088A6F9497bE9",
+    "Verifier": "0x2E9666Ef15B09Fc43C3Aab3f170E56Ea86E24917",
+    "Reputation": "0x48787C9d837710FBa86C7Ab2E77039dF186F15b6"
+  },
+  "deployedAt": "2026-05-06T20:04:54.529Z"
+}

@@ -6,6 +6,13 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
+// Interface for Reputation contract
+interface IReputation {
+    function adjustForTaskCompletion(address agent, uint256 taskId, bool success) external;
+    function addVerificationBonus(address agent, uint256 taskId) external;
+    function addCompletionBonus(address agent, uint256 taskId) external;
+}
+
 /**
  * @title TaskEscrow
  * @notice Escrow contract for managing USDC payments for AI agent tasks
@@ -49,6 +56,7 @@ contract TaskEscrow is Ownable, ReentrancyGuard {
     uint256 public platformFeePercentage; // 100 = 1%
     address public feeRecipient;
     address public verifierContract;
+    address public reputationContract;
 
     // Events
     event TaskCreated(uint256 indexed taskId, address indexed client, address provider, uint256 amount);
@@ -62,6 +70,7 @@ contract TaskEscrow is Ownable, ReentrancyGuard {
     event PlatformFeeUpdated(uint256 newFeePercentage);
     event FeeRecipientUpdated(address newRecipient);
     event VerifierContractUpdated(address newVerifier);
+    event ReputationContractUpdated(address newReputation);
 
     // Errors
     error TaskNotFound();
@@ -196,6 +205,15 @@ contract TaskEscrow is Ownable, ReentrancyGuard {
         task.status = success ? TaskStatus.Verified : TaskStatus.Completed;
         task.verifiedAt = block.timestamp;
 
+        // Auto-update reputation when task is verified
+        if (reputationContract != address(0)) {
+            try IReputation(reputationContract).adjustForTaskCompletion(task.provider, taskId, success) {
+                // Reputation update succeeded
+            } catch {
+                // Reputation update failed, continue without it
+            }
+        }
+
         emit TaskVerified(taskId, success);
     }
 
@@ -218,6 +236,21 @@ contract TaskEscrow is Ownable, ReentrancyGuard {
         // Transfer platform fee
         if (platformFee > 0) {
             usdcToken.safeTransfer(feeRecipient, platformFee);
+        }
+
+        // Auto-add verification and completion bonuses to reputation
+        if (reputationContract != address(0)) {
+            try IReputation(reputationContract).addVerificationBonus(task.provider, taskId) {
+                // Verification bonus added
+            } catch {
+                // Verification bonus failed, continue
+            }
+            
+            try IReputation(reputationContract).addCompletionBonus(task.provider, taskId) {
+                // Completion bonus added
+            } catch {
+                // Completion bonus failed, continue
+            }
         }
 
         task.status = TaskStatus.Paid;
@@ -296,6 +329,16 @@ contract TaskEscrow is Ownable, ReentrancyGuard {
         if (newVerifier == address(0)) revert InvalidAmount();
         verifierContract = newVerifier;
         emit VerifierContractUpdated(newVerifier);
+    }
+
+    /**
+     * @notice Update reputation contract address
+     * @param newReputation New reputation contract address
+     */
+    function setReputationContract(address newReputation) external onlyOwner {
+        if (newReputation == address(0)) revert InvalidAmount();
+        reputationContract = newReputation;
+        emit ReputationContractUpdated(newReputation);
     }
 
     /**

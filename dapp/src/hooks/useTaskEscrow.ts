@@ -1,12 +1,22 @@
-import { useWriteContract, useReadContract } from 'wagmi'
+import { useWriteContract, useReadContract, useAccount } from 'wagmi'
 import { taskEscrowABI } from '../contracts/taskEscrowABI'
 import { getContractAddresses } from '../contracts/config'
 import { useChainId } from 'wagmi'
 
+const kiteaiChain = {
+  id: 2368,
+  name: 'Kite AI Testnet',
+  nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+  rpcUrls: {
+    default: { http: ['https://rpc-testnet.gokite.ai/'] }
+  },
+  testnet: true,
+}
+
 export function useCreateTask() {
   const chainId = useChainId()
+  const { address } = useAccount()
   const addresses = getContractAddresses(chainId)
-
   const { writeContract, isPending, error } = useWriteContract()
 
   const createTask = (
@@ -19,6 +29,8 @@ export function useCreateTask() {
       abi: taskEscrowABI,
       functionName: 'createTask',
       args: [provider as `0x${string}`, amount, taskData],
+      chain: kiteaiChain,
+      account: address,
     })
   }
 
@@ -27,8 +39,8 @@ export function useCreateTask() {
 
 export function useFundTask() {
   const chainId = useChainId()
+  const { address } = useAccount()
   const addresses = getContractAddresses(chainId)
-
   const { writeContract, isPending, error } = useWriteContract()
 
   const fundTask = (taskId: bigint, amount: bigint) => {
@@ -37,6 +49,8 @@ export function useFundTask() {
       abi: taskEscrowABI,
       functionName: 'fundTask',
       args: [taskId, amount],
+      chain: kiteaiChain,
+      account: address,
     })
   }
 
@@ -45,8 +59,8 @@ export function useFundTask() {
 
 export function useCompleteTask() {
   const chainId = useChainId()
+  const { address } = useAccount()
   const addresses = getContractAddresses(chainId)
-
   const { writeContract, isPending, error } = useWriteContract()
 
   const completeTask = (taskId: bigint, taskOutput: string) => {
@@ -55,6 +69,8 @@ export function useCompleteTask() {
       abi: taskEscrowABI,
       functionName: 'completeTask',
       args: [taskId, taskOutput],
+      chain: kiteaiChain,
+      account: address,
     })
   }
 

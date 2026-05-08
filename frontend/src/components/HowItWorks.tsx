@@ -42,9 +42,9 @@ const HowItWorks = () => {
   ];
 
   return (
-    <section id="how-it-works" className="py-32 relative overflow-hidden">
+    <section id="how-it-works" className="py-24 relative overflow-hidden">
       {/* Subtle background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-midnight via-midnight-light/30 to-midnight" />
+      <div className="absolute inset-0 bg-gradient-to-b from-midnight via-midnight to-midnight" />
       
       <div className="container mx-auto px-6 relative z-10">
         <motion.div
@@ -76,7 +76,7 @@ const HowItWorks = () => {
                 whileInView={{ opacity: 1, x: 0, scale: 1 }}
                 viewport={{ once: true, margin: "-100px" }}
                 transition={{ duration: 0.6, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
-                className={`flex flex-col md:flex-row items-center gap-8 ${
+                className={`flex flex-col md:flex-row items-center gap-8 md:gap-16 ${
                   index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
                 }`}
               >

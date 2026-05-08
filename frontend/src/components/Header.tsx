@@ -14,7 +14,17 @@ const Header = () => {
   ];
 
   const handleLaunchDApp = () => {
-    window.open('http://localhost:5173', '_blank');
+    window.open('http://localhost:5174', '_blank');
+  };
+
+  const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
+    e.preventDefault();
+    const element = document.getElementById(targetId.replace('#', ''));
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    // Close mobile menu if open
+    setIsMenuOpen(false);
   };
 
   return (
@@ -35,6 +45,7 @@ const Header = () => {
               <motion.a
                 key={item.name}
                 href={item.href}
+                onClick={(e) => handleSmoothScroll(e, item.href)}
                 whileHover={{ y: -2 }}
                 className="text-gray-300 hover:text-white transition-colors text-sm font-medium"
               >
@@ -75,7 +86,7 @@ const Header = () => {
                 <a
                   key={item.name}
                   href={item.href}
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={(e) => handleSmoothScroll(e, item.href)}
                   className="text-gray-300 hover:text-white transition-colors text-sm font-medium"
                 >
                   {item.name}

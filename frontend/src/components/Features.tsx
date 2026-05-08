@@ -50,9 +50,9 @@ const Features = () => {
   ];
 
   return (
-    <section id="features" className="py-32 relative">
+    <section id="features" className="py-24 relative overflow-hidden">
       {/* Subtle background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-midnight via-midnight-light/50 to-midnight" />
+      <div className="absolute inset-0 bg-gradient-to-b from-midnight via-midnight to-midnight" />
       
       <div className="container mx-auto px-6 relative z-10">
         <motion.div

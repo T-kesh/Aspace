@@ -3,6 +3,27 @@ import { z } from "zod";
 import { pool } from "../db/pool.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
+// Fallback in-memory task store
+type TaskInput = {
+  clientAddress: string;
+  providerAddress: string;
+  amount: number;
+  taskData: string;
+};
+
+type Task = TaskInput & {
+  id: string;
+  taskOutput: string | null;
+  status: string;
+  createdAt: string;
+  fundedAt: string | null;
+  completedAt: string | null;
+  verifiedAt: string | null;
+  paidAt: string | null;
+};
+
+const fallbackTasks = new Map<string, Task>();
+
 export const tasksRouter = Router();
 
 const ethereumAddressSchema = z.string().regex(/^0x[a-fA-F0-9]{40}$/, "Expected a valid Ethereum address");
@@ -40,20 +61,40 @@ tasksRouter.post(
   asyncHandler(async (request, response) => {
     const input = taskCreateSchema.parse(request.body);
 
-    const result = await pool.query(
-      `INSERT INTO tasks (
-         client_address,
-         provider_address,
-         amount,
-         task_data,
-         status
-       )
-       VALUES ($1, $2, $3, $4, 'created')
-       RETURNING *`,
-      [input.clientAddress, input.providerAddress, input.amount, input.taskData]
-    );
+    try {
+      const result = await pool.query(
+        `INSERT INTO tasks (
+           client_address,
+           provider_address,
+           amount,
+           task_data,
+           status
+         )
+         VALUES ($1, $2, $3, $4, 'created')
+         RETURNING *`,
+        [input.clientAddress, input.providerAddress, input.amount, input.taskData]
+      );
 
-    response.status(201).json({ data: mapTask(result.rows[0]) });
+      response.status(201).json({ data: mapTask(result.rows[0]) });
+    } catch (error) {
+      console.warn("Using fallback task store for POST /tasks.", error);
+      const task: Task = {
+        id: `task-${Date.now()}`,
+        clientAddress: input.clientAddress,
+        providerAddress: input.providerAddress,
+        amount: input.amount,
+        taskData: input.taskData,
+        taskOutput: null,
+        status: "created",
+        createdAt: new Date().toISOString(),
+        fundedAt: null,
+        completedAt: null,
+        verifiedAt: null,
+        paidAt: null
+      };
+      fallbackTasks.set(task.id, task);
+      response.status(201).json({ data: task });
+    }
   })
 );
 
@@ -65,38 +106,61 @@ tasksRouter.get(
     const clientAddress = typeof request.query.client === "string" ? request.query.client : undefined;
     const providerAddress = typeof request.query.provider === "string" ? request.query.provider : undefined;
 
-    let whereClause = "";
-    const values: (string | number)[] = [];
-    let paramIndex = 1;
+    try {
+      let whereClause = "";
+      const values: (string | number)[] = [];
+      let paramIndex = 1;
 
-    if (clientAddress) {
-      whereClause += ` WHERE client_address = $${paramIndex}`;
-      values.push(clientAddress);
-      paramIndex++;
-    } else if (providerAddress) {
-      whereClause += ` WHERE provider_address = $${paramIndex}`;
-      values.push(providerAddress);
+      if (clientAddress) {
+        whereClause += ` WHERE client_address = $${paramIndex}`;
+        values.push(clientAddress);
+        paramIndex++;
+      } else if (providerAddress) {
+        whereClause += ` WHERE provider_address = $${paramIndex}`;
+        values.push(providerAddress);
+      }
+
+      const query = `
+        SELECT *
+        FROM tasks
+        ${whereClause}
+        ORDER BY created_at DESC
+        LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+      `;
+      values.push(limit, offset);
+
+      const result = await pool.query(query, values);
+
+      response.json({
+        data: result.rows.map(mapTask),
+        meta: {
+          total: result.rowCount,
+          limit,
+          offset,
+        },
+      });
+    } catch (error) {
+      console.warn("Using fallback task store for GET /tasks.", error);
+      let tasks = [...fallbackTasks.values()];
+      
+      if (clientAddress) {
+        tasks = tasks.filter(t => t.clientAddress === clientAddress);
+      } else if (providerAddress) {
+        tasks = tasks.filter(t => t.providerAddress === providerAddress);
+      }
+      
+      tasks = tasks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      const paginatedTasks = tasks.slice(offset, offset + limit);
+      
+      response.json({
+        data: paginatedTasks,
+        meta: {
+          total: tasks.length,
+          limit,
+          offset,
+        },
+      });
     }
-
-    const query = `
-      SELECT *
-      FROM tasks
-      ${whereClause}
-      ORDER BY created_at DESC
-      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
-    `;
-    values.push(limit, offset);
-
-    const result = await pool.query(query, values);
-
-    response.json({
-      data: result.rows.map(mapTask),
-      meta: {
-        total: result.rowCount,
-        limit,
-        offset,
-      },
-    });
   })
 );
 

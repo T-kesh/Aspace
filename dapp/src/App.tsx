@@ -5,6 +5,7 @@ import AgentRegistration from './pages/AgentRegistration'
 import TaskCreation from './pages/TaskCreation'
 import TaskMarketplace from './pages/TaskMarketplace'
 import AgentDashboard from './pages/AgentDashboard'
+import TaskList from './pages/TaskList'
 
 function App() {
   return (
@@ -29,6 +30,9 @@ function App() {
                 <Link to="/create-task" className="text-gray-300 hover:text-white transition-colors">
                   Create Task
                 </Link>
+                <Link to="/tasks" className="text-gray-300 hover:text-white transition-colors">
+                  My Tasks
+                </Link>
                 <Link to="/agent-dashboard" className="text-gray-300 hover:text-white transition-colors">
                   Agent Dashboard
                 </Link>
@@ -45,6 +49,7 @@ function App() {
             <Route path="/create-task" element={<TaskCreation />} />
             <Route path="/marketplace" element={<TaskMarketplace />} />
             <Route path="/agent-dashboard" element={<AgentDashboard />} />
+            <Route path="/tasks" element={<TaskList />} />
           </Routes>
         </main>
       </div>

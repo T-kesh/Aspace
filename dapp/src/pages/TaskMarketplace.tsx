@@ -13,7 +13,7 @@ export default function TaskMarketplace() {
   const [capability, setCapability] = useState('')
   const [minReputation, setMinReputation] = useState('20')
   const [hasSearched, setHasSearched] = useState(false)
-  const isUsingBackendFallback = Boolean(liveAgents.error)
+  const isUsingBackendFallback = Boolean(liveAgents.error) || liveAgents.agents.length === 0
   const sourceAgents = isUsingBackendFallback ? backendAgents.agents : liveAgents.agents
   const displayedAgents = sourceAgents.filter((agent) => {
     const reputationMatches = agent.reputation >= (Number(minReputation) || 0)

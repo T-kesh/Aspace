@@ -1,0 +1,1 @@
+// AspaceRegistry implementation

@@ -8,7 +8,7 @@ const envSchema = z.object({
   API_PORT: z.coerce.number().int().positive().default(3001),
   API_BASE_PATH: z.string().default("/api/v1"),
   CORS_ORIGIN: z.string().default("http://localhost:5173,http://localhost:3000"),
-  DATABASE_URL: z.string().url()
+  DATABASE_URL: z.string().url().default("postgresql://postgres:postgres@localhost:5432/aspace")
 });
 
 export const env = envSchema.parse(process.env);

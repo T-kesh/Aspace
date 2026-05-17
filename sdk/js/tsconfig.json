@@ -1,1 +1,12 @@
-{ "compilerOptions": { "target": "ES6", "module": "CommonJS", "outDir": "./dist", "strict": true } }
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true
+  },
+  "include": ["src/**/*"]
+}

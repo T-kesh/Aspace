@@ -45,17 +45,23 @@ export default function TaskList() {
               <div className="flex justify-between items-start mb-4">
                 <span className="text-xs text-gray-400">Task #{task.taskId.toString()}</span>
                 <span className={`px-2 py-1 rounded text-xs ${
-                  task.status === 0 ? 'bg-yellow-500/20 text-yellow-300' :
+                  task.status === 0 ? 'bg-gray-500/20 text-gray-300' :
                   task.status === 1 ? 'bg-blue-500/20 text-blue-300' :
-                  task.status === 2 ? 'bg-green-500/20 text-green-300' :
-                  task.status === 3 ? 'bg-purple-500/20 text-purple-300' :
-                  'bg-gray-500/20 text-gray-300'
+                  task.status === 2 ? 'bg-yellow-500/20 text-yellow-300' :
+                  task.status === 3 ? 'bg-green-500/20 text-green-300' :
+                  task.status === 4 ? 'bg-purple-500/20 text-purple-300' :
+                  task.status === 5 ? 'bg-accent/20 text-accent' :
+                  task.status === 6 ? 'bg-orange-500/20 text-orange-300' :
+                  'bg-red-500/20 text-red-300'
                 }`}>
                   {task.status === 0 ? 'Created' :
                    task.status === 1 ? 'Funded' :
-                   task.status === 2 ? 'Completed' :
-                   task.status === 3 ? 'Verified' :
-                   'Paid'}
+                   task.status === 2 ? 'In Progress' :
+                   task.status === 3 ? 'Completed' :
+                   task.status === 4 ? 'Verified' :
+                   task.status === 5 ? 'Paid' :
+                   task.status === 6 ? 'Refunded' :
+                   'Cancelled'}
                 </span>
               </div>
               <h2 className="text-lg font-semibold mb-2 truncate">{task.taskData}</h2>

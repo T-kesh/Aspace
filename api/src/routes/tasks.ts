@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { pool } from "../db/pool.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { taskEscrowContract, parseTask } from "../services/blockchainService.js";
 
 // Fallback in-memory task store
 type TaskInput = {
@@ -41,7 +42,7 @@ const taskSubmitSchema = z.object({
 
 function mapTask(row: Record<string, unknown>) {
   return {
-    id: row.id,
+    id: String(row.id),
     clientAddress: row.client_address,
     providerAddress: row.provider_address,
     amount: Number(row.amount),
@@ -77,7 +78,7 @@ tasksRouter.post(
 
       response.status(201).json({ data: mapTask(result.rows[0]) });
     } catch (error) {
-      console.warn("Using fallback task store for POST /tasks.", error);
+      console.warn("Using fallback task store for POST /tasks.", (error as any).message);
       const task: Task = {
         id: `task-${Date.now()}`,
         clientAddress: input.clientAddress,
@@ -107,6 +108,60 @@ tasksRouter.get(
     const providerAddress = typeof request.query.provider === "string" ? request.query.provider : undefined;
 
     try {
+      // 1. Attempt to fetch all tasks from the live smart contract
+      const nextId = Number(await taskEscrowContract.nextTaskId());
+      let tasksList = [];
+
+      for (let i = 1; i < nextId; i++) {
+        try {
+          const raw = await taskEscrowContract.getTask(i);
+          const parsed = parseTask(raw);
+
+          // Apply filters
+          if (clientAddress && parsed.clientAddress.toLowerCase() !== clientAddress.toLowerCase()) {
+            continue;
+          }
+          if (providerAddress && parsed.providerAddress.toLowerCase() !== providerAddress.toLowerCase()) {
+            continue;
+          }
+
+          tasksList.push({
+            id: String(parsed.taskId),
+            clientAddress: parsed.clientAddress,
+            providerAddress: parsed.providerAddress,
+            amount: parsed.amount,
+            taskData: parsed.taskData,
+            taskOutput: parsed.taskOutput,
+            status: parsed.status,
+            createdAt: parsed.createdAt ? new Date(parsed.createdAt * 1000).toISOString() : null,
+            fundedAt: parsed.fundedAt ? new Date(parsed.fundedAt * 1000).toISOString() : null,
+            completedAt: parsed.completedAt ? new Date(parsed.completedAt * 1000).toISOString() : null,
+            verifiedAt: parsed.verifiedAt ? new Date(parsed.verifiedAt * 1000).toISOString() : null,
+            paidAt: parsed.paidAt ? new Date(parsed.paidAt * 1000).toISOString() : null
+          });
+        } catch (itemError) {
+          // Skip individual failed lookups
+        }
+      }
+
+      // Sort by newest first
+      tasksList = tasksList.sort((a, b) => Number(b.id) - Number(a.id));
+      const paginated = tasksList.slice(offset, offset + limit);
+
+      response.json({
+        data: paginated,
+        meta: {
+          total: tasksList.length,
+          limit,
+          offset
+        }
+      });
+      return;
+    } catch (blockchainError) {
+      console.warn("Blockchain task listing failed, checking database...", (blockchainError as any).message);
+    }
+
+    try {
       let whereClause = "";
       const values: (string | number)[] = [];
       let paramIndex = 1;
@@ -122,10 +177,10 @@ tasksRouter.get(
 
       const query = `
         SELECT *
-        FROM tasks
-        ${whereClause}
-        ORDER BY created_at DESC
-        LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+         FROM tasks
+         ${whereClause}
+         ORDER BY created_at DESC
+         LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
       `;
       values.push(limit, offset);
 
@@ -140,18 +195,18 @@ tasksRouter.get(
         },
       });
     } catch (error) {
-      console.warn("Using fallback task store for GET /tasks.", error);
+      console.warn("Using fallback task store for GET /tasks.", (error as any).message);
       let tasks = [...fallbackTasks.values()];
-      
+
       if (clientAddress) {
         tasks = tasks.filter(t => t.clientAddress === clientAddress);
       } else if (providerAddress) {
         tasks = tasks.filter(t => t.providerAddress === providerAddress);
       }
-      
+
       tasks = tasks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       const paginatedTasks = tasks.slice(offset, offset + limit);
-      
+
       response.json({
         data: paginatedTasks,
         meta: {
@@ -170,14 +225,49 @@ tasksRouter.get(
     const idSchema = z.coerce.number().int().positive();
     const taskId = idSchema.parse(request.params.id);
 
-    const result = await pool.query("SELECT * FROM tasks WHERE id = $1", [taskId]);
+    try {
+      // 1. Fetch live from smart contract
+      const raw = await taskEscrowContract.getTask(taskId);
+      const parsed = parseTask(raw);
 
-    if (result.rowCount === 0) {
-      response.status(404).json({ error: "TaskNotFound" });
+      response.json({
+        data: {
+          id: String(parsed.taskId),
+          clientAddress: parsed.clientAddress,
+          providerAddress: parsed.providerAddress,
+          amount: parsed.amount,
+          taskData: parsed.taskData,
+          taskOutput: parsed.taskOutput,
+          status: parsed.status,
+          createdAt: parsed.createdAt ? new Date(parsed.createdAt * 1000).toISOString() : null,
+          fundedAt: parsed.fundedAt ? new Date(parsed.fundedAt * 1000).toISOString() : null,
+          completedAt: parsed.completedAt ? new Date(parsed.completedAt * 1000).toISOString() : null,
+          verifiedAt: parsed.verifiedAt ? new Date(parsed.verifiedAt * 1000).toISOString() : null,
+          paidAt: parsed.paidAt ? new Date(parsed.paidAt * 1000).toISOString() : null
+        }
+      });
       return;
+    } catch (blockchainError) {
+      console.warn(`Blockchain lookup failed for task #${taskId}:`, (blockchainError as any).message);
     }
 
-    response.json({ data: mapTask(result.rows[0]) });
+    try {
+      const result = await pool.query("SELECT * FROM tasks WHERE id = $1", [taskId]);
+
+      if (result.rowCount === 0) {
+        response.status(404).json({ error: "TaskNotFound" });
+        return;
+      }
+
+      response.json({ data: mapTask(result.rows[0]) });
+    } catch (error) {
+      const task = fallbackTasks.get(String(taskId));
+      if (!task) {
+        response.status(404).json({ error: "TaskNotFound" });
+        return;
+      }
+      response.json({ data: task });
+    }
   })
 );
 
@@ -192,19 +282,29 @@ tasksRouter.post(
       const result = await pool.query(
         `UPDATE tasks
          SET task_output = $1, status = 'completed', completed_at = NOW()
-         WHERE id = $2 AND status = 'funded'
+         WHERE id = $2
          RETURNING *`,
         [input.output, taskId]
       );
 
       if (result.rowCount === 0) {
-        response.status(404).json({ error: "TaskNotFoundOrInvalidStatus" });
+        // Mock fallback store update
+        const task = fallbackTasks.get(String(taskId));
+        if (task) {
+          task.taskOutput = input.output;
+          task.status = "completed";
+          task.completedAt = new Date().toISOString();
+          response.json({ data: task });
+          return;
+        }
+
+        response.status(404).json({ error: "TaskNotFound" });
         return;
       }
 
       response.json({ data: mapTask(result.rows[0]) });
     } catch (error) {
-      console.warn("Database error for POST /tasks/:id/submit.", error);
+      console.warn("Database error for POST /tasks/:id/submit.", (error as any).message);
       response.status(500).json({ error: "DatabaseError" });
     }
   })

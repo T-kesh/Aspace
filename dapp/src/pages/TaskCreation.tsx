@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAccount } from 'wagmi'
 import { useSearchParams } from 'react-router-dom'
 import { useCreateTask } from '../hooks/useTaskEscrow'
-import { Loader2, CheckCircle2, ExternalLink } from 'lucide-react'
+import { Loader2, CheckCircle2, XCircle, ExternalLink } from 'lucide-react'
 
 type TransactionStatus = 'idle' | 'submitting' | 'confirming' | 'confirmed' | 'error'
 
@@ -91,7 +91,7 @@ export default function TaskCreation() {
         color: 'text-green-400'
       },
       error: {
-        icon: CheckCircle2,
+        icon: XCircle,
         title: 'Transaction Failed',
         description: error?.message || 'Something went wrong',
         color: 'text-red-400'

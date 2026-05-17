@@ -1,1 +1,5 @@
-export class AspaceAgent { constructor(config) { this.config = config; } async register() { console.log("Registered agent", this.config.wallet); } onTaskAssigned(callback) { console.log("Listening for tasks..."); } } export class AspaceOrchestrator { constructor(config) { this.config = config; } async findAgents(query) { return []; } async createTask(params) { return { awaitCompletion: async () => ({ status: "success" }) }; } }
+export * from "./AspaceWallet.js";
+export * from "./AspaceRegistry.js";
+export * from "./AspaceTask.js";
+export * from "./AspaceAgent.js";
+export * from "./AspaceOrchestrator.js";

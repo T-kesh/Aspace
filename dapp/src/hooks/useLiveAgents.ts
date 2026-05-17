@@ -4,81 +4,90 @@ import { agentRegistryABI } from '../contracts/agentRegistryABI'
 import { getContractAddresses } from '../contracts/config'
 import type { Agent } from './useBackendAgents'
 
-type ContractAgent = readonly [
-  owner: `0x${string}`,
-  name: string,
-  description: string,
-  capabilities: readonly string[],
-  pricePerTask: bigint,
-  reputationScore: bigint,
-  isActive: boolean,
-  totalTasksCompleted: bigint,
+// The shape wagmi decodes from the getAgent tuple ABI
+type ContractAgent = {
+  owner: `0x${string}`
+  name: string
+  description: string
+  capabilities: readonly string[]
+  pricePerTask: bigint
+  reputationScore: bigint
+  isActive: boolean
+  totalTasksCompleted: bigint
   registrationTime: bigint
-]
+}
 
 export function useLiveAgents() {
   const chainId = useChainId()
   const addresses = getContractAddresses(chainId)
   const registryAddress = addresses.agentRegistry as `0x${string}`
 
-  const agentAddressesQuery = useReadContract({
+  // Step 1: get totalAgents count to know how many addresses to fetch
+  const { data: totalAgentsData } = useReadContract({
     address: registryAddress,
     abi: agentRegistryABI,
-    functionName: 'getAllAgents',
+    functionName: 'totalAgents',
   })
 
-  const agentAddresses = useMemo(() => (agentAddressesQuery.data ?? []) as `0x${string}`[], [
-    agentAddressesQuery.data,
-  ])
+  const totalAgents = Number(totalAgentsData ?? 0)
 
-  const agentDetailsQuery = useReadContracts({
+  // Step 2: batch-fetch each agent address from the agentAddresses[] public array
+  const agentAddressQueries = useReadContracts({
+    contracts: Array.from({ length: totalAgents }, (_, i) => ({
+      address: registryAddress,
+      abi: agentRegistryABI,
+      functionName: 'agentAddresses',
+      args: [BigInt(i)],
+    })),
+    query: { enabled: totalAgents > 0 },
+  })
+
+  const agentAddresses = useMemo(() => {
+    if (!agentAddressQueries.data) return []
+    return agentAddressQueries.data
+      .map((r) => r?.result as `0x${string}` | undefined)
+      .filter((addr): addr is `0x${string}` => !!addr)
+  }, [agentAddressQueries.data])
+
+  // Step 3: batch-fetch full agent structs via getAgent
+  const agentDetailQueries = useReadContracts({
     contracts: agentAddresses.map((agentAddress) => ({
       address: registryAddress,
       abi: agentRegistryABI,
       functionName: 'getAgent',
       args: [agentAddress],
     })),
-    query: {
-      enabled: agentAddresses.length > 0,
-    },
+    query: { enabled: agentAddresses.length > 0 },
   })
 
   const agents = useMemo<Agent[]>(() => {
-    const results = agentDetailsQuery.data
-    if (!results) return []
+    if (!agentDetailQueries.data) return []
 
-    return results.flatMap((result, index): Agent[] => {
-      // In wagmi v3, failed contract calls return null
-      if (result === null || result === undefined) {
-        return []
-      }
+    return agentDetailQueries.data.flatMap((result, index): Agent[] => {
+      if (!result || result.status !== 'success' || !result.result) return []
 
-      const agent = result as unknown as ContractAgent
-
-      // Skip inactive agents (contract reverts for inactive, so normally result would be null)
-      if (!agent[6]) {
-        return []
-      }
+      const agent = result.result as unknown as ContractAgent
+      if (!agent.isActive) return []
 
       return [{
         walletAddress: agentAddresses[index],
-        ownerAddress: agent[0],
-        name: agent[1],
-        metadataUri: agent[2],
-        capabilities: [...agent[3]],
-        pricePerTask: Number(agent[4]) / 1e6,
-        reputation: Number(agent[5]),
-        tasksCompleted: Number(agent[7]),
-        active: agent[6],
-        createdAt: new Date(Number(agent[8]) * 1000).toISOString(),
+        ownerAddress: agent.owner,
+        name: agent.name,
+        metadataUri: agent.description,
+        capabilities: [...agent.capabilities],
+        pricePerTask: Number(agent.pricePerTask) / 1e6,
+        reputation: Number(agent.reputationScore),
+        tasksCompleted: Number(agent.totalTasksCompleted),
+        active: agent.isActive,
+        createdAt: new Date(Number(agent.registrationTime) * 1000).toISOString(),
       }]
     })
-  }, [agentDetailsQuery.data, agentAddresses])
+  }, [agentDetailQueries.data, agentAddresses])
 
   return {
     agents,
-    isLoading: agentAddressesQuery.isLoading || agentDetailsQuery.isLoading,
-    error: agentAddressesQuery.error ?? agentDetailsQuery.error,
+    isLoading: agentAddressQueries.isLoading || agentDetailQueries.isLoading,
+    error: agentAddressQueries.error ?? agentDetailQueries.error,
     chainId,
     registryAddress,
   }

@@ -30,9 +30,9 @@ export default function AgentDashboard() {
       <h1 className="text-4xl font-bold mb-2">Agent Dashboard</h1>
       <p className="text-gray-400 mb-8">Manage your AI agents and track performance</p>
 
-      {error && (
-        <div className="mb-6 p-4 bg-red-900/30 border border-red-700 rounded-lg">
-          <p className="text-red-400">Error loading agent data: {error?.message || 'Unknown error'}</p>
+      {!agent && !isLoading && (
+        <div className="mb-6 p-4 bg-yellow-900/30 border border-yellow-700 rounded-lg">
+          <p className="text-yellow-400">No agent registered for this wallet address on-chain.</p>
         </div>
       )}
 

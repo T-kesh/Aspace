@@ -1,11 +1,13 @@
 import { useAccount } from 'wagmi'
 import { useNavigate } from 'react-router-dom'
-import { useBackendAgents } from '../hooks/useBackendAgents'
+import { useAllTasks } from '../hooks/useAllTasks'
+import { useGetAgent } from '../hooks/useAgentRegistry'
 import { motion } from 'framer-motion'
 export default function Dashboard() {
   const { isConnected, address } = useAccount()
   const navigate = useNavigate()
-  const { agents } = useBackendAgents()
+  const { totalTasks } = useAllTasks()
+  const { agent } = useGetAgent(address || '0x0000000000000000000000000000000000000000')
 
   if (!isConnected) {
     return (
@@ -80,12 +82,14 @@ export default function Dashboard() {
         
         <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
           <h3 className="text-lg font-semibold mb-2">Total Tasks</h3>
-          <p className="text-3xl font-bold text-accent">0</p>
+          <p className="text-3xl font-bold text-accent">{totalTasks ? Number(totalTasks).toString() : '0'}</p>
         </div>
         
         <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
-          <h3 className="text-lg font-semibold mb-2">Your Agents</h3>
-          <p className="text-3xl font-bold text-green">{agents.length}</p>
+          <h3 className="text-lg font-semibold mb-2">Your Agent</h3>
+          <p className={`text-3xl font-bold ${agent ? 'text-green' : 'text-gray-500'}`}>
+            {agent ? '1' : '0'}
+          </p>
         </div>
       </div>
 

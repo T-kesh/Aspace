@@ -56,7 +56,7 @@ export function useGetAgent(agentAddress: string) {
   const chainId = useChainId()
   const addresses = getContractAddresses(chainId)
 
-  const { data, isLoading, error } = useReadContract({
+  const { data, isLoading } = useReadContract({
     address: addresses.agentRegistry as `0x${string}`,
     abi: agentRegistryABI,
     functionName: 'getAgent',

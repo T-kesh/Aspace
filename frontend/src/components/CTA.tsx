@@ -3,7 +3,8 @@ import { ArrowRight, BookOpen } from 'lucide-react';
 
 const CTA = () => {
   const handleLaunchDApp = () => {
-    window.open('http://localhost:5173', '_blank');
+    const dappUrl = import.meta.env.DEV ? 'http://localhost:5174' : '/dapp/';
+    window.open(dappUrl, '_blank');
   };
 
   const handleViewDocumentation = () => {

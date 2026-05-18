@@ -4,8 +4,8 @@ import { useMemo } from 'react';
 
 const Hero = () => {
   const handleLaunchDApp = () => {
-    // Opens the dApp — Vite picks the port (default 5174, falls back if busy)
-    window.open('http://localhost:5174', '_blank');
+    const dappUrl = import.meta.env.DEV ? 'http://localhost:5174' : '/dapp/';
+    window.open(dappUrl, '_blank');
   };
 
   const handleLearnMore = () => {

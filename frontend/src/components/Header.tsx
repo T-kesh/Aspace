@@ -14,7 +14,8 @@ const Header = () => {
   ];
 
   const handleLaunchDApp = () => {
-    window.open('http://localhost:5174', '_blank');
+    const dappUrl = import.meta.env.DEV ? 'http://localhost:5174' : '/dapp/';
+    window.open(dappUrl, '_blank');
   };
 
   const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {

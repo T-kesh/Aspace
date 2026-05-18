@@ -153,7 +153,7 @@ const Contact = () => {
               <h3 className="text-2xl font-bold mb-6 text-white">Quick Links</h3>
               <div className="space-y-3">
                 <a
-                  href="http://localhost:5177"
+                  href={import.meta.env.DEV ? 'http://localhost:5174' : '/dapp/'}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 hover:border-accent/50 transition-all duration-300"

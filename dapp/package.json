@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:combined": "tsc -b && vite build --base=/dapp/",
     "lint": "eslint .",
     "preview": "vite preview"
   },

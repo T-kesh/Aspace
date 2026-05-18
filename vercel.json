@@ -1,0 +1,17 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/dapp",
+      "destination": "/dapp/index.html"
+    },
+    {
+      "source": "/dapp/(.*)",
+      "destination": "/dapp/index.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
